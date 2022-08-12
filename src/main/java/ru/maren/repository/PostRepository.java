@@ -3,11 +3,13 @@ package ru.maren.repository;
 import org.springframework.stereotype.Repository;
 import ru.maren.model.Post;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Repository
 public class PostRepository {
@@ -19,12 +21,16 @@ public class PostRepository {
     }
 
     public Collection<Post> all() {
-        return allPosts.values();
+        return allPosts.values().stream()
+                .filter(post -> !post.isRemoved())
+                .collect(Collectors.toCollection(ArrayList<Post>::new));
     }
 
     public Optional<Post> getById(long id) {
-        //return Optional.of(allPosts.get(id));
-        return allPosts.get(id) != null ? Optional.of(allPosts.get(id)) : Optional.empty();
+        if (!allPosts.get(id).isRemoved()) {
+            return allPosts.get(id) != null ? Optional.of(allPosts.get(id)) : Optional.empty();
+        } else
+            return Optional.empty();
     }
 
     public Post save(Post post) {
@@ -41,7 +47,7 @@ public class PostRepository {
 
     public void removeById(long id) {
         if (allPosts.get(id) != null) {
-            allPosts.remove(id);
+            allPosts.get(id).setRemoved(true);
         }
     }
 }
